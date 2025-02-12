@@ -5,13 +5,13 @@ const schema = mongoose.Schema({
    email: String,
    location: String,
    proc_type: String,
-   log: String,
+   log: mongoose.Schema.Types.Mixed
 
 },{
     versionKey: false,
     timestamps: {
         createdAt: 'created_at',
-        updatedAt: 'updated_at'
+        updatedAt: 'updated_at' 
     }
 });
 
