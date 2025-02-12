@@ -21,7 +21,6 @@ const formats = format.combine(
     format.simple(),
     format.splat(),
     format.printf(info => `${info.timestamp} ${info.level.toUpperCase()}: [email: ${info.email}] [location: ${info.location}] [proc_type: ${info.proc_type}] [log: ${info.message}`),
-
 )
 
 const logger = createLogger({
