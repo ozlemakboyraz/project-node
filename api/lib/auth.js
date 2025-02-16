@@ -3,8 +3,13 @@ const { Strategy, ExtractJwt } = require('passport-jwt');
 const Users = require('../db/models/Users');
 const UserRoles = require('../db/models/UserRoles');
 const RolePrivileges = require('../db/models/RolePrivileges');
+const Response = require('./Response');
+const { HTTP_STATUS_CODES } = require('../config/Enum');
 
 const config = require('../config');
+
+const privs = require('../config/role_privileges');
+const CustomError = require("./Error");
 
 // secretOrKey: Token'ı doğrulamak için kullanılan gizli anahtar (config.JWT.SECRET).
 // jwtFromRequest: JWT'nin hangi kaynaktan alınacağını belirtiyor. Burada Bearer Token başlığından (Authorization: Bearer <TOKEN>) alınıyor.
@@ -25,11 +30,14 @@ module.exports = function () {
 
                 let rolePrivileges = await RolePrivileges.find({ role_id: { $in: userRoles.map(x => x.role_id) } });
 
+
+                let privileges = rolePrivileges.map(rp => privs.privileges.find(x => x.key == rp.permission))
+
                 done(null,
                     {
                         id: user._id,
                         email: user.email,
-                        roles: rolePrivileges,
+                        roles: privileges,
                         first_name: user.first_name,
                         last_name: user.last_name,
                         exp: parseInt(Date.now() / 1000) + config.JWT.EXPIRE_TIME
@@ -46,12 +54,28 @@ module.exports = function () {
     passport.use(strategy);
 
     return {
-        initialize: function(){
+        initialize: function () {
             return passport.initialize();
         },
-        authenticate: function() {
-            return passport.authenticate('jwt', {session: false});
+        authenticate: function () {
+            return passport.authenticate('jwt', { session: false });
+        },
+        checkRoles: (...expectedRoles) => {
+            return (req, res, next) => {
+
+                let i = 0;
+                let privileges = req.user.roles.filter(x => x).map(x => x.key);
+
+                while (i < expectedRoles.length && !privileges.includes(expectedRoles[i])) i++;
+
+                if (i >= expectedRoles.length) {
+                    let response = Response.errorResponse(new CustomError(HTTP_STATUS_CODES.UNAUTHORIZED, "Need Permission", "Need Permission"));
+                    return res.status(response.code).json(response);
+                }
+
+                return next(); // Authorized
+
+            }
         }
     }
-
 }
