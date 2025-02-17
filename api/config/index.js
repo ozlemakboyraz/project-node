@@ -4,8 +4,9 @@ module.exports = {
     "CONNECTION_STRING": process.env.CONNECTION_STRING || 'mongodb://localhost:27017/project-node,',
     "JWT": {
         "SECRET": "123456",
-        "EXPIRE_TIME": !isNaN(parseInt(process.env.JWT_EXPIRE_TIME )) ? parseInt(process.env.JWT_EXPIRE_TIME) : 24 * 60 * 60
-    }
+        "EXPIRE_TIME": !isNaN(parseInt(process.env.JWT_EXPIRE_TIME)) ? parseInt(process.env.JWT_EXPIRE_TIME) : 24 * 60 * 60
+    },
+    "DEFAULT_LANG": process.env.DEFAULT_LANG || "EN"
 }
 
 //Ortam değişkenleri ve yapılandırma dosyaları
