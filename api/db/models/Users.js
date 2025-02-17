@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const is = require('is_js');
 const { PASS_LENGTH } = require('../../config/Enum');
 const { HTTP_STATUS_CODES } = require('../../config/Enum');
+const { DEFAULT_LANG } = require("../../config");
 const CustomError = require("../../lib/Error");
 const bcrypt = require('bcryptjs');
 
@@ -11,7 +12,8 @@ const schema = mongoose.Schema({
     is_active: { type: Boolean, default: true },
     first_name: String,
     last_name: String,
-    phone_number: String
+    phone_number: String,
+    language: { type: String, default: DEFAULT_LANG }
 }, {
     versionKey: false,
     timestamps: {
