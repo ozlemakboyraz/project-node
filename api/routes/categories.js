@@ -12,6 +12,23 @@ const i18n = new (require("../lib/i18n"))(config.DEFAULT_LANG);
 const emitter = require("../lib/Emitter");
 const excelExport = new (require("../lib/Export"))();
 const fs = require('fs');
+const multer = require('multer');  //request ile atılan dosyayı upload etmek için
+const path = require('path');
+const Import = new (require("../lib/Import"))();
+
+let multerStorage = multer.diskStorage({
+  destination: (req, file, next) => {   //dosyanın hangi dizine kaydedileceğini belirler.
+      next(null, config.FILE_UPLOAD_PATH)  
+  },
+  filename: (req, file, next) => {  //dosyanın hangi isimle kaydedileceğini belirler.
+      next(null, file.fieldname + "_" + Date.now() + path.extname(file.originalname));
+  }
+})
+
+
+const upload = multer({ storage: multerStorage }).single("pb_file");
+
+
 
 router.all('*',auth.authenticate(), (req, res, next) => {
   next();
@@ -105,7 +122,7 @@ router.delete('/delete', auth.checkRoles("category_delete"),  async (req, res) =
 });
 
 
-router.post("/export", auth.checkRoles("category_export"), async (req, res) => {
+router.post("/export", auth.checkRoles("category_export"), async (req, res) => { //Veritabanındaki kategorileri Excel olarak indiriyor.
   try {
       let categories = await Categories.find({});
 
@@ -129,5 +146,34 @@ router.post("/export", auth.checkRoles("category_export"), async (req, res) => {
       res.status(errorResponse.code).json(Response.errorResponse(err));
   }
 });
+
+
+
+router.post("/import", auth.checkRoles("category_add"), upload, async (req, res) => {  //Excel dosyasındaki kategorileri veritabanına ekliyor.
+  try {
+
+      let file = req.file;
+      let body = req.body;
+
+      let rows = Import.fromExcel(file.path);
+
+      for (let i = 1; i < rows.length; i++) {
+          let [name, is_active, user, created_at, updated_at] = rows[i];
+          if (name) {
+              await Categories.create({
+                  name,
+                  is_active: typeof is_active === "string" ? is_active.toLowerCase() === "true" : !!is_active, // Boolean dönüşümü
+                  created_by: req.user._id
+              });
+          }
+      }
+
+      res.status(Enum.HTTP_STATUS_CODES.CREATED).json(Response.successResponse(req.body, Enum.HTTP_STATUS_CODES.CREATED));
+
+  } catch (err) {
+      let errorResponse = Response.errorResponse(err);
+      res.status(errorResponse.code).json(Response.errorResponse(err));
+  }
+})
 
 module.exports = router;
