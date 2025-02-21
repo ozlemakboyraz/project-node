@@ -86,10 +86,10 @@ router.post('/auth', async (req, res) => {
 
     let user = await Users.findOne({ email: email });
 
-    if (!user) throw new CustomError(Enum.HTTP_STATUS_CODES.UNAUTHORIZED, i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user?.language), i18n.translate("USERS.AUTH_ERROR", req.user?.language));
+    if (!user) throw new CustomError(Enum.HTTP_STATUS_CODES.UNAUTHORIZED, i18n.translate("COMMON.VALIDATION_ERROR_TITLE", config.DEFAULT_LANG), i18n.translate("USERS.AUTH_ERROR", config.DEFAULT_LANG));
 
+    if (!user.validPassword(password)) throw new CustomError(Enum.HTTP_STATUS_CODES.UNAUTHORIZED, i18n.translate("COMMON.VALIDATION_ERROR_TITLE", config.DEFAULT_LANG), i18n.translate("USERS.AUTH_ERROR", config.DEFAULT_LANG));
 
-    if (!user.validPassword(password)) throw new CustomError(Enum.HTTP_STATUS_CODES.UNAUTHORIZED, i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user?.language), i18n.translate("USERS.AUTH_ERROR", req.user?.language));
 
 
     let payload = {
