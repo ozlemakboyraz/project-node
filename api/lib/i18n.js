@@ -11,7 +11,7 @@ class I18n{
 
         let arr = text.split('.'); // COMMON.VALIDATION_ERROR_TITLE => ["COMMON","VALIDATION_ERROR_TITLE"]
 
-        let val = i18n[lang] [arr[0]];  //i18n["EN"] ["COMMON"]
+        let val = i18n[lang][arr[0]];  //i18n["EN"] ["COMMON"]
 
         for (let i = 1; i < arr.length; i++) {
             val = val[arr[i]]; // i=1 için val["VALIDATION_ERROR_TITLE"]
