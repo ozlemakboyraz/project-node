@@ -12,8 +12,22 @@ const Roles = require('../db/models/Roles');
 const config = require('../config');
 const auth = require('../lib/auth')();
 const i18n = new (require("../lib/i18n"))(config.DEFAULT_LANG);
-
 var router = express.Router();
+const { rateLimit } = require("express-rate-limit");
+const RateLimitMongo = require("rate-limit-mongo");
+
+const limiter = rateLimit({
+  store: new RateLimitMongo({
+    uri: config.CONNECTION_STRING,
+    collectionName: "rateLimits",
+    expireTimeMs: 15 * 60 * 1000 // 15 minutes
+  }),
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  limit: 5, // Limit each IP to 5 requests per `window` (here, per 15 minutes).
+  //standardHeaders: 'draft-8', // draft-6: `RateLimit-*` headers; draft-7 & draft-8: combined `RateLimit` header
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers.
+  // store: ... , // Redis, Memcached, etc. See below.
+});
 
 
 router.post('/register', async (req, res) => {
@@ -75,7 +89,7 @@ router.post('/register', async (req, res) => {
 
 
 // Kullanıcı Giriş endpoint
-router.post('/auth', async (req, res) => {
+router.post('/auth', limiter, async (req, res) => {
 
   try {
 
@@ -208,6 +222,10 @@ router.put('/update', auth.checkRoles("user_update"), async (req, res) => {
     if (body.last_name) updates.last_name = body.last_name;
     if (body.phone_number) updates.phone_number = body.phone_number;
 
+    if (body._id == req.user.id) {
+      // throw new CustomError(Enum.HTTP_STATUS_CODES.FORBIDDEN, i18n.translate("COMMON.NEED_PERMISSIONS", req.user.language), i18n.translate("COMMON.NEED_PERMISSIONS", req.user.language))
+      body.roles = null;
+    }
 
     if (Array.isArray(body.roles) && body.roles.length > 0) {
       let userRoles = await UserRoles.find({ user_id: body._id });
