@@ -17,7 +17,7 @@ class Database {
         let db = await mongoose.connect(options.CONNECTION_STRING );
         this.mongoConnection = db;
         console.log('Database connected');
-       } catch (error) {
+       } catch (err) {
         console.error(err);
         process.exit(1);
        }
